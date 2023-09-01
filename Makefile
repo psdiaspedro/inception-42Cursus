@@ -1,33 +1,63 @@
-all: up
+COMPOSE := srcs/docker-compose.yml
+ENV_FILE := srcs/.env
+LOGIN := paugusto
+VOLUMES_PATH :=/home/$(LOGIN)/data
 
-# check if paugusto.42.fr is in /etc/hosts, if not add it
-# then create all volume folders
-# then compose up
-up:
-	sudo chmod a+w /etc/hosts && sudo cat /etc/hosts | grep paugusto.42.fr || \
-	sudo echo "127.0.0.1 paugusto.42.fr" >> /etc/hosts
+ENV_CONTENT := \
+    WORDPRESS_DATABASE=wordpress_db\
+    \nWORDPRESS_USER=wuser\
+	\nWORDPRESS_USER_EMAIL=paugusto@studant.42sp.org.br\
+    \nWORDPRESS_PASSWORD=wpass\
+    \nMYSQL_ROOT_PASSWORD=rpass\
+    \nWORDPRESS_HOSTNAME=mariadb\
+    \nDOMAIN_NAME=https://$(LOGIN).42.fr\
+    \nLOGIN_42=$(LOGIN)\
+    \nWP_TITLE=INCEPTION\
+    \nWP_ADMIN_USER=paugusto\
+    \nWP_ADMIN_PASSWORD=123\
+    \nWP_ADMIN_EMAIL=$(LOGIN)@studant.42sp.org.br\
+    \nWP_URL=http://localhost
 
-	sudo mkdir -p /home/paugusto/data/wordpress && sudo chmod 777 /home/paugusto/data/wordpress
-	sudo mkdir -p /home/paugusto/data/mariadb && sudo chmod 777 /home/paugusto/data/mariadb
+all: $(ENV_FILE)
+	@make env
+	@make setup
+	@make assemble
 
-	sudo docker-compose -f srcs/docker-compose.yml up -d
+assemble:
+	docker-compose --file=$(COMPOSE) up --build --detach
+
+setup: $(ENV_FILE)
+	@sudo mkdir -p $(VOLUMES_PATH)/wordpress
+	@sudo mkdir -p $(VOLUMES_PATH)/mariadb
+	@sudo grep $(LOGIN).42.fr /etc/hosts || sudo bash -c 'echo "127.0.0.1 $(LOGIN).42.fr" >> /etc/hosts'
+
+env:
+	@echo "$(ENV_CONTENT)" > $(ENV_FILE)
+	@echo "Arquivo $(ENV_FILE) criado ou atualizado."
+
+rb: down fclean all
 
 down:
-	docker stop $$(docker ps -qa); \
-	docker rm $$(docker ps -qa); \
-	docker rmi -f $$(docker images -qa); \
-	docker volume rm $$(docker volume ls -q); \
-	docker network rm $$(docker network ls -q); \
-	sudo rm -rf /home/paugusto/data
-	sudo sed -i '/127.0.0.1 paugusto.42.fr/d' /etc/hosts
+	docker-compose --file=$(COMPOSE) down || true
+
+rt:
+	@docker stop $$(docker ps -qa) || true
+	@docker rm $$(docker ps -qa) || true
+	@docker rmi -f $$(docker images -qa) || true
+	@docker volume rm $$(docker volume ls -q) || true
+	@docker network rm $$(docker network ls -q) 2>/dev/null || true
+	@sudo rm -rf /home/$(LOGIN) || true
 
 clean:
-	sudo docker-compose -f srcs/docker-compose.yml down -v --rmi all --remove-orphans
-	sudo -n sed '/127.0.0.1 paugusto.42.fr/d' /etc/hosts -n
+	@rm -f srcs/.env || true
 
-fclean: clean
-	sudo docker system prune --volumes --all --force
+fclean: down
+	@docker rmi -f $$(docker images -q) || true
+	@docker volume rm $$(docker volume ls -q) || true
+	@sudo rm -rf /home/$(LOGIN) || true
 
 re: fclean all
+	@echo "[Success]: Completely restarted."
 
-.PHONY: all
+
+.PHONY: all assemble setup env rb down rt clean fclean re

@@ -12,7 +12,7 @@ volumes:
     driver_opts:
       o: bind
       type: none
-      device: ${DATADIR}/mariadb
+      device: /home/paugusto/data/mariadb
   
   wordpress-data:
     name: wordpress-data
@@ -20,89 +20,53 @@ volumes:
     driver_opts:
       o: bind
       type: none
-      device: ${DATADIR}/wordpress
+      device: /home/paugusto/data/wordpress
 
 services:
   mariadb:
     image: mariadb:inception
     container_name: mariadb
-    build: ./requirements/mariadb
-    restart: unless-stopped
+    build: 
+      context: ./requirements/mariadb
+      dockerfile: Dockerfile
+    restart: always
+    env_file:
+      - .env
     networks:
       - inception
     volumes:
       - mariadb-data:/var/lib/mysql
-    healthcheck:
-      test: mariadb-admin ping -h localhost
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    environment:
-        - MYSQL_USER
-        - MYSQL_PASSWORD
-        - MYSQL_DATABASE
-        - MYSQL_ROOT_PASSWORD
   
   nginx:
     image: nginx:inception
     container_name: nginx
     build:
       context: ./requirements/nginx
-      args:
-         - DOMAIN_NAME
-    restart: unless-stopped
+      dockerfile: Dockerfile
+    restart: always
     ports:
       - "443:443"
     networks:
       - inception
     volumes:
-      - adminer-data:/var/www/adminer
       - wordpress-data:/var/www/wordpress
-    healthcheck:
-      test: curl --insecure --silent --fail https://127.0.0.1
-      interval: 30s
-      timeout: 10s
-      retries: 3
+    env_file:
+      - .env
     depends_on:
-      adminer:
-        condition: service_healthy
-      monitoror:
-        condition: service_healthy
-      static-website:
-        condition: service_healthy
-      wordpress:
-        condition: service_healthy
+      - wordpress
   
   wordpress:
     image: wordpress:inception
     container_name: wordpress
-    build: ./requirements/wordpress
-    restart: unless-stopped
+    build:
+      context: ./requirements/wordpress
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    restart: always
     networks:
       - inception
     volumes:
-      - wordpress-data:/var/www/wordpress
-    healthcheck:
-      test: cgi-fcgi -bind -connect 127.0.0.1:9000
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      - wordpress-data:/var/www/html/wordpress
     depends_on:
-      mariadb:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    environment:
-      - MYSQL_HOST
-      - MYSQL_USER
-      - MYSQL_PASSWORD
-      - MYSQL_DATABASE
-      - WP_URL
-      - WP_TITLE
-      - WP_SUB_TITLE
-      - WP_ADMIN_USER
-      - WP_ADMIN_EMAIL
-      - WP_ADMIN_PWD
-      - WP_USER
-      - WP_USER_EMAIL
-      - WP_USER_PWD
+      - mariadb

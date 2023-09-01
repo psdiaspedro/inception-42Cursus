@@ -22,9 +22,7 @@
 define( "WP_HOME", "https://" .$_SERVER["HTTP_HOST"]. "/" );
 define( "WP_SITEURL", "https://" .$_SERVER["HTTP_HOST"]. "/" );
 
-/** Unique key for every site */
-define('WP_CACHE_KEY_SALT', getenv('DOMAIN_NAME') );
-
+// ** Database settings - You can get this info from your web host ** //
 /** The name of the database for WordPress */
 define( 'DB_NAME', getenv('MYSQL_DATABASE') );
 

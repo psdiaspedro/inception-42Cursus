@@ -1,24 +1,18 @@
 FROM debian:bullseye
 
-ENV DEBIAN_FRONTEND=noninteractive
+RUN apt update -y && apt upgrade -y && apt install \
+    mariadb-server -y \
+    nano
 
-RUN apt update \
-  && apt install -y curl \
-  && curl -LsS https://r.mariadb.com/downloads/mariadb_repo_setup | bash \
-  && apt install -y mariadb-server mariadb-client \
-  && apt clean \
-  && rm -rf /var/lib/apt/list/* /tmp/* /var/tmp/*
+RUN rm /etc/mysql/mariadb.conf.d/50-server.cnf
+COPY ./conf/50-server.cnf /etc/mysql/mariadb.conf.d/
 
-RUN mkdir -p /var/lib/mysql /var/run/mysqld \
-  && chown -R mysql:mysql /var/lib/mysql /var/run/mysqld \
-  && chmod 755 /var/run/mysqld
+RUN chmod 644 /etc/mysql/mariadb.conf.d/50-server.cnf
+RUN chown -R mysql:mysql /var/lib/mysql
 
-COPY ./conf/my.cnf /etc/mysql/my.cnf
-COPY ./tools/entrypoint.sh entrypoint.sh
+COPY ./tools/init.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/init.sh
 
-RUN chown mysql:mysql entrypoint.sh && chmod 754 entrypoint.sh
+ENTRYPOINT ["init.sh"]
 
-USER mysql
-EXPOSE 3306
-
-ENTRYPOINT ["/entrypoint.sh"]
+CMD ["/usr/sbin/mariadbd"]

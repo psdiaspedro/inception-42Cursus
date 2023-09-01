@@ -1,19 +1,24 @@
 FROM debian:bullseye
 
-RUN apt update && apt install -y nginx openssl 
+RUN apt update -y && apt upgrade -y && apt install nginx -y \
+        && apt install nano -y && apt install curl -y
 
 RUN mkdir /etc/nginx/ssl
 
-RUN openssl req -x509 -nodes -days 365 \
-    -subj "/C=BR/ST=SP/O=42/CN=paugusto.42.fr" \
-    -addext "subjectAltName=DNS:paugusto.42.fr" \
-    -newkey rsa:2048 -keyout /etc/nginx/ssl/paugusto.key \
-    -out /etc/nginx/ssl/paugusto.crt
+RUN apt install openssl -y
 
-COPY ./conf/nginx.conf /etc/nginx/conf.d
+RUN openssl req -x509 -nodes -days 365 \
+    -subj "/C=BR/ST=SP/L=SP/O=42sp/CN=$DOMAIN_NAME/UID=$LOGIN_42" \
+    -newkey rsa:2048 -keyout /etc/nginx/ssl/inception.key \
+    -out /etc/nginx/ssl/inception.crt
+
+RUN mkdir -p /var/run/nginx
+
+COPY ./conf/nginx.conf /etc/nginx/nginx.conf
+
+RUN chmod 755 /var/www/html
+RUN chown -R www-data:www-data /var/www/html
 
 EXPOSE 443
-
-STOPSIGNAL SIGQUIT
 
 ENTRYPOINT ["nginx", "-g", "daemon off;"]
