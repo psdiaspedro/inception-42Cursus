@@ -1,72 +1,68 @@
 version: '3.8'
 
-networks:
-  inception:
-    name: "inception-network"
-    driver: bridge
-  
-volumes:
-  mariadb-data:
-    name: mariadb-data
-    driver: local
-    driver_opts:
-      o: bind
-      type: none
-      device: /home/paugusto/data/mariadb
-  
-  wordpress-data:
-    name: wordpress-data
-    driver: local
-    driver_opts:
-      o: bind
-      type: none
-      device: /home/paugusto/data/wordpress
-
 services:
   mariadb:
-    image: mariadb:inception
+    image: mariadb
     container_name: mariadb
+    restart: always
     build: 
       context: ./requirements/mariadb
-      dockerfile: Dockerfile
-    restart: always
     env_file:
       - .env
-    networks:
-      - inception
+    ports:
+      - 3306:3306
     volumes:
       - mariadb-data:/var/lib/mysql
+    networks:
+      - inception
   
   nginx:
-    image: nginx:inception
+    image: nginx
     container_name: nginx
+    restart: always
     build:
       context: ./requirements/nginx
       dockerfile: Dockerfile
-    restart: always
-    ports:
-      - "443:443"
     networks:
       - inception
-    volumes:
-      - wordpress-data:/var/www/wordpress
+    ports:
+      - 443:443
     env_file:
       - .env
+    volumes:
+      - wordpress-data:/var/www/html/wordpress
     depends_on:
       - wordpress
   
   wordpress:
-    image: wordpress:inception
+    image: wordpress
     container_name: wordpress
+    restart: always
     build:
       context: ./requirements/wordpress
       dockerfile: Dockerfile
     env_file:
       - .env
-    restart: always
-    networks:
-      - inception
     volumes:
       - wordpress-data:/var/www/html/wordpress
+    networks:
+      - inception
     depends_on:
       - mariadb
+  
+volumes:
+  mariadb-data:
+    driver_opts:
+      o: bind
+      type: none
+      device: /home/paugusto/data/mariadb
+  wordpress-data:
+    driver_opts:
+      o: bind
+      type: none
+      device: /home/paugusto/data/wordpress
+
+networks:
+  inception:
+    name: "inception-network"
+    driver: bridge

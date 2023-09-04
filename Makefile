@@ -5,17 +5,17 @@ VOLUMES_PATH :=/home/$(LOGIN)/data
 
 ENV_CONTENT := \
     WORDPRESS_DATABASE=wordpress_db\
-    \nWORDPRESS_USER=wuser\
-	\nWORDPRESS_USER_EMAIL=paugusto@studant.42sp.org.br\
-    \nWORDPRESS_PASSWORD=wpass\
+    \nWORDPRESS_USER=normaluser\
+	\nWORDPRESS_USER_EMAIL=normaluser@student.42sp.org.br\
+    \nWORDPRESS_PASSWORD=123123\
     \nMYSQL_ROOT_PASSWORD=rpass\
     \nWORDPRESS_HOSTNAME=mariadb\
     \nDOMAIN_NAME=https://$(LOGIN).42.fr\
     \nLOGIN_42=$(LOGIN)\
     \nWP_TITLE=INCEPTION\
     \nWP_ADMIN_USER=paugusto\
-    \nWP_ADMIN_PASSWORD=123\
-    \nWP_ADMIN_EMAIL=$(LOGIN)@studant.42sp.org.br\
+    \nWP_ADMIN_PASSWORD=123123\
+    \nWP_ADMIN_EMAIL=$(LOGIN)@student.42sp.org.br\
     \nWP_URL=http://localhost
 
 all: $(ENV_FILE)
@@ -32,7 +32,7 @@ setup: $(ENV_FILE)
 	@sudo grep $(LOGIN).42.fr /etc/hosts || sudo bash -c 'echo "127.0.0.1 $(LOGIN).42.fr" >> /etc/hosts'
 
 env:
-	@echo "$(ENV_CONTENT)" >> $(ENV_FILE)
+	@echo "$(ENV_CONTENT)" > $(ENV_FILE)
 	@echo "Arquivo $(ENV_FILE) criado ou atualizado."
 
 rb: down fclean all
