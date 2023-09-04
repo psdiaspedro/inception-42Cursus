@@ -15,7 +15,6 @@ RUN wget https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.ph
         --output-document=/usr/local/bin/wp \
         && chmod +x /usr/local/bin/wp
 
-# Create directory to start php
 RUN mkdir -p /run/php /var/www/html/wordpress \
     && chmod -R 755 /var/www/html/
 

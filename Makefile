@@ -32,7 +32,7 @@ setup: $(ENV_FILE)
 	@sudo grep $(LOGIN).42.fr /etc/hosts || sudo bash -c 'echo "127.0.0.1 $(LOGIN).42.fr" >> /etc/hosts'
 
 env:
-	@echo "$(ENV_CONTENT)" > $(ENV_FILE)
+	@echo "$(ENV_CONTENT)" >> $(ENV_FILE)
 	@echo "Arquivo $(ENV_FILE) criado ou atualizado."
 
 rb: down fclean all
